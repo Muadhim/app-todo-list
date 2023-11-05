@@ -1,0 +1,57 @@
+version: '3'
+services:
+  app:
+    container_name: todo_app
+    build: .
+    ports:
+      - 8080:8080
+    restart: on-failure
+    volumes:
+      - api:/usr/scr/app/
+    depends_on:
+      - todo-mysql
+    networks:
+      - todo
+
+  todo-mysql:
+    image: mysql:8.0
+    container_name: todo_db_mysql
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_HOST:${DB_HOST}
+      - MYSQL_USER:${DB_USER}
+      - MYSQL_PASSWORD:${DB_PASSWORD}
+      - MYSQL_DATABASE:${DB_NAME}
+      - MYSQL_ROOT_PASSWORD:${DB_PASSWORD}
+      - MYSQL_ALLOW_EMPTY_PASSWORD=no
+      - MYSQL_RANDOM_ROOT_PASSWORD=no
+    volumes:
+      - database_mysql:/var/lib/mysql
+    networks:
+      - todo
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: todo_phpmyadmin
+    depends_on:
+      - todo-mysql
+    environment:
+      - PMA_HOST:mysql # Note the "mysql". Must be the name of the what you used as the mysql service.
+      - PMA_USER:${DB_USER}
+      - PMA_PORT:${DB_PORT}
+      - PMA_PASSWORD:${DB_PASSWORD}
+    ports:
+      - 9090:80
+    restart: always
+    networks:
+      - todo
+
+volumes:
+  api:
+  database_mysql:
+
+# Networks to be created to facilitate communication between containers
+networks:
+  todo:
+    driver: bridge
